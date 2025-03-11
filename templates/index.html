@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>CSE 564 Lab 2a</title>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+<script>
+
+    // scree plot
+
+    // plot dimensions and margins
+    const margin = {top: 30, right: 20, bottom: 40, left: 50};
+    const width = 640 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+    
+    // create empty plot and append to container div
+    const svg = d3.select("#container")
+        .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    // Parse the Data
+    d3.csv('http://localhost:8000/scree').then(function(data) {
+    
+    // create x-axis
+    const x = d3.scaleBand()
+        .range([0, width])
+        .domain(data.map(d => d.x))
+        .padding(0.2);
+
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+            .attr("transform", "translate(-10,0)rotate(-45)")
+            .style("text-anchor", "end");
+    
+    // create y-axis
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.y)])
+      .range([height, 0]);
+
+    svg.append("g")
+        .call(d3.axisLeft(y));
+    
+    // generate bar chart
+    svg.selectAll("scree")
+      .data(data)
+      .enter()
+      .append("rect")
+        .attr("x", d => x(d.x))
+        .attr("y", d => y(d.y))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d.y))
+        .attr("fill", "#69b3a2")
+    
+    // text label for x axis
+    svg.append("text")
+        .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 3) + ")")
+        .style("text-anchor", "middle")
+        .text("Component Number");
+
+    // text label for y axis
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x", 0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Eigenvalue");
+
+    // text label for plot
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("text-decoration", "underline")  
+        .text("Scree Plot");
+    })
+
+    </script>
+
+</body>
+</html>

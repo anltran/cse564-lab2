@@ -12,5 +12,9 @@ def index():
 def scree():
     return send_from_directory('static', 'scree.csv')
 
+@app.route('/mse')
+def mse():
+    return send_from_directory('static', 'mse_scores.csv')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

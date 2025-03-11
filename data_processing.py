@@ -1,3 +1,6 @@
+import os
+os.environ['OMP_NUM_THREADS'] = '1'
+
 import pandas as pd
 import csv
 
@@ -6,6 +9,8 @@ from sklearn.decomposition import PCA
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import mean_squared_error
+
+from kneed import KneeLocator
 
 # Numerical features in spotify dataset
 features = ['artist_count', 'in_spotify_playlists', 'streams', 'in_apple_playlists', 'in_deezer_playlists', 'bpm', 'danceability', 'valence', 'energy', 'acousticness', 'instrumentalness', 'liveness', 'speechiness']
@@ -42,16 +47,11 @@ with open('./static/scree.csv', 'w', newline='') as f:
     for x, y in enumerate(eigenvalues, start=1):
         writer.writerow([x, y])
 
-
-from kneed import KneeLocator
+# Find the elbow of the scree plot
 kneedle = KneeLocator(range(1, len(eigenvalues)+1), eigenvalues, S=1.0, curve='convex', direction='decreasing')
 # print(round(kneedle.elbow))
 
 # Run KMeans clustering
-import os
-
-os.environ['OMP_NUM_THREADS'] = '1'
-
 mse_scores = []
 cluster_ids = pd.DataFrame()
 
@@ -69,3 +69,14 @@ for i in range(1,11):
 
 # print("MSE scores:", mse_scores)
 # print("Cluster IDs:\n", cluster_ids)
+
+# Write the mse scores to a CSV file
+with open('./static/mse_scores.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['k', 'mse'])
+    for k, mse in enumerate(mse_scores, start=1):
+        writer.writerow([k, mse])
+
+# Find the elbow of the MSE plot
+kneedle = KneeLocator(range(1, 11), mse_scores, S=1.0, curve='convex', direction='decreasing')
+# print(round(kneedle.elbow))

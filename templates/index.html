@@ -17,6 +17,8 @@
     <p><strong>k:</strong> <span id="mse-position">6</span></p>
 </div>
 
+<div id="biplot"></div>
+
 <script>
 
     function generateScree() {
@@ -216,6 +218,108 @@
     }
 
     generateMSE();
+
+</script>
+
+<script>
+
+    function generateBiplot(k) {
+        // plot dimensions and margins
+        const margin = {top: 30, right: 20, bottom: 40, left: 50};
+        const width = 640 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        
+        // create empty plot and append to container div
+        const svg = d3.select("#biplot")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        // Parse the Data
+        d3.csv('http://localhost:8000/biplot').then(function(data) {
+        
+        // create x-axis
+        const x = d3.scaleLinear()
+            .range([0, width])
+            .domain([d3.min(data, d => d.PC1)-3, d3.max(data, d => d.PC1)+3])
+
+        // create y-axis
+        const y = d3.scaleLinear()
+        .domain([d3.min(data, d => d.PC2)-3, d3.max(data, d => d.PC2)+3])
+        .range([height, 0]);
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x))
+
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        // color scale
+        const color = d3.scaleOrdinal()
+            .domain([d3.min(data, d => +d[k]), d3.max(data, d => +d[k])])
+            .range(d3.schemeCategory10);
+
+        // generate biplot
+        svg.selectAll("circle")
+            .data(data)
+            .enter().append("circle")
+            .attr("cx", d => x(d.PC1))
+            .attr("cy", d => y(d.PC2))
+            .attr("r", 2)
+            .style("fill", d => color(+d[k]));
+
+        d3.csv('http://localhost:8000/loadings').then(function(loadings) {
+        // Add PCA loadings (vectors) as arrows
+        svg.selectAll(".loading-arrow")
+            .data(loadings)
+            .enter().append("line")
+            .attr("class", "loading-arrow")
+            .attr("x1", x(0))
+            .attr("y1", y(0))
+            .attr("x2", d => x(d.PC1 * 5))  // Scaling factor for better visualization
+            .attr("y2", d => y(d.PC2 * 5))
+            .attr("stroke", "red")
+            .attr("stroke-width", 2);
+
+        // add labels for loadings
+        svg.selectAll(".loading-text")
+            .data(loadings)
+            .enter().append("text")
+            .attr("x", d => x(d.PC1 * 5) + 5)
+            .attr("y", d => y(d.PC2 * 5) - 5)
+            .text(d => d.feature)
+            .attr("font-size", "12px");
+        });
+
+        // text label for x axis
+        svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 3) + ")")
+            .style("text-anchor", "middle")
+            .text("Component 1");
+
+        // text label for y axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Component 2");
+
+        // text label for plot
+        svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")
+            .style("text-decoration", "underline")  
+            .text("PCA Biplot");
+        })
+    }
+
+    generateBiplot('kmeans_6');
 
 </script>
 

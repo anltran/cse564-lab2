@@ -70,7 +70,7 @@ for i in range(1,11):
 # print("MSE scores:", mse_scores)
 # print("Cluster IDs:\n", cluster_ids)
 
-# Write the mse scores to a CSV file
+# Write the MSE scores to a CSV file
 with open('./static/mse_scores.csv', 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(['k', 'mse'])
@@ -80,3 +80,32 @@ with open('./static/mse_scores.csv', 'w', newline='') as f:
 # Find the elbow of the MSE plot
 kneedle = KneeLocator(range(1, 11), mse_scores, S=1.0, curve='convex', direction='decreasing')
 # print(round(kneedle.elbow))
+
+# Write the PCA values and kmeans color to a CSV file
+with open('./static/biplot.csv', 'w', newline='') as f:
+    labels = []
+    for i in range(len(eigenvectors)):
+        labels.append('PC' + str(i+1))
+    for i in range(10):
+        labels.append('kmeans_' + str(i+1))
+    writer = csv.writer(f)
+    writer.writerow(labels)
+    for i in range(len(pca_values)):
+        row = []
+        for j in range(len(eigenvectors)):
+            row.append(pca_values[i][j])
+        for j in range(10):
+            row.append(cluster_ids['kmeans_' + str(j+1)][i])
+        writer.writerow(row)
+
+
+# Write the eigenvectors and labels to a CSV file
+with open('./static/loadings.csv', 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerow(['feature', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8', 'PC9', 'PC10', 'PC11', 'PC12', 'PC13'])
+    for i, feature in enumerate(features):
+        row = [feature]
+        for j in range(len(eigenvectors)):
+            row.append(eigenvectors[j][i])
+        writer.writerow(row)
+        

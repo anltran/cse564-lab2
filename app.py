@@ -16,5 +16,13 @@ def scree():
 def mse():
     return send_from_directory('static', 'mse_scores.csv')
 
+@app.route('/biplot')
+def biplot():
+    return send_from_directory('static', 'biplot.csv')
+
+@app.route('/loadings')
+def loadings():
+    return send_from_directory('static', 'loadings.csv')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

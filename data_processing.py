@@ -42,6 +42,11 @@ with open('./static/scree.csv', 'w', newline='') as f:
     for x, y in enumerate(eigenvalues, start=1):
         writer.writerow([x, y])
 
+
+from kneed import KneeLocator
+kneedle = KneeLocator(range(1, len(eigenvalues)+1), eigenvalues, S=1.0, curve='convex', direction='decreasing')
+# print(round(kneedle.elbow))
+
 # Run KMeans clustering
 import os
 

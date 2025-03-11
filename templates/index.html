@@ -3,12 +3,14 @@
 <head>
     <meta charset="utf-8">
     <title>CSE 564 Lab 2a</title>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
 
 <div id="container"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<div id="selection-info">
+    <p><strong>Intrinsic Dimensionality Index:</strong> <span id="selected-position">3</span></p>
+</div>
 
 <script>
 
@@ -52,7 +54,7 @@
         .call(d3.axisLeft(y));
     
     // generate bar chart
-    svg.selectAll("scree")
+    const bars = svg.selectAll("scree")
       .data(data)
       .enter()
       .append("rect")
@@ -60,7 +62,28 @@
         .attr("y", d => y(d.y))
         .attr("width", x.bandwidth())
         .attr("height", d => height - y(d.y))
-        .attr("fill", "#69b3a2")
+        .attr("fill", "steelblue")
+        .on("mouseover", function(event, d) {
+            if (!d3.select(this).classed("selected")) {
+                d3.select(this).style("fill", "orange");
+            }
+        })
+        .on("mouseout", function(event, d) {
+            if (!d3.select(this).classed("selected")) {
+                d3.select(this).style("fill", "steelblue");
+            }
+        })
+        .on("click", function(event, d) {
+            const selection = d3.select(this);
+            bars.classed("selected", false).style("fill", "steelblue");
+            selection.classed("selected", true).style("fill", "green");
+            document.getElementById('selected-position').textContent = data.indexOf(d) + 1;
+        });
+
+    // Select and color the third bar by default
+    bars.filter((d, i) => i === 2)
+      .classed("selected", true)
+      .style("fill", "green");
     
     // text label for x axis
     svg.append("text")

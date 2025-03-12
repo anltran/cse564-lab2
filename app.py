@@ -24,5 +24,9 @@ def biplot():
 def loadings():
     return send_from_directory('static', 'loadings.csv')
 
+@app.route('/data')
+def data():
+    return send_from_directory('static', 'spotify-clustered.csv')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

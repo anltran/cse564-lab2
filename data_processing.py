@@ -108,4 +108,6 @@ with open('./static/loadings.csv', 'w', newline='') as f:
         for j in range(len(eigenvectors)):
             row.append(eigenvectors[j][i])
         writer.writerow(row)
-        
+
+result = pd.concat([df, cluster_ids], axis=1)
+result.to_csv('./static/spotify-clustered.csv', index=False)

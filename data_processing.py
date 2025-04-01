@@ -134,6 +134,7 @@ embedding = MDS(n_components=2, dissimilarity='precomputed', random_state=42)
 mds = embedding.fit_transform(1-abs(df.corr()))
 with open('./static/var_mds.csv', 'w', newline='') as f:
     writer = csv.writer(f)
-    writer.writerow(['x', 'y'])
-    for x, y in mds:
-        writer.writerow([x, y])
+    writer.writerow(['x', 'y', 'feature'])
+    for i in range(len(mds)):
+        row = [mds[i][0], mds[i][1], features[i]]
+        writer.writerow(row)

@@ -25,6 +25,9 @@
 
 <div id="biplot"></div>
 
+<div id="mds-data"></div>
+<div id="mds-var"></div>
+
 <script>
 
     function generateScree() {
@@ -204,6 +207,9 @@
                 const scatterplot = document.getElementById("scatterplot");
                 scatterplot.innerHTML = '';
                 generateScatterplot(+document.getElementById('scree-position').textContent, "kmeans_" + document.getElementById('mse-position').textContent);
+                const mdsData = document.getElementById("mds-data");
+                mdsData.innerHTML = '';
+                generateMDSData("kmeans_" + document.getElementById('mse-position').textContent);
             });
 
         // Select and color the sixth bar by default
@@ -492,5 +498,200 @@
 
 </script>
 
+<script>
+
+    function generateMDSData(k) {
+        // plot dimensions and margins
+        const margin = {top: 30, right: 20, bottom: 40, left: 50};
+        const width = 640 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        
+        // create empty plot and append to container div
+        const svg = d3.select("#mds-data")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        // Parse the Data
+        d3.csv('http://localhost:8000/mds-data').then(function(data) {
+        
+        // create x-axis
+        const x = d3.scaleLinear()
+            .range([0, width])
+            .domain([d3.min(data, d => d.x), d3.max(data, d => d.x)])
+
+        xAxis = d3.axisBottom(x)
+        xAxis.tickFormat(d3.format(".1"));
+
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+            
+        // create y-axis
+        const y = d3.scaleLinear()
+        .domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
+        .range([height, 0]);
+
+        yAxis = d3.axisLeft(y)
+        yAxis.tickFormat(d3.format(".1"));
+
+        svg.append("g")
+            .call(yAxis);
+
+        // color scale
+        const color = d3.scaleOrdinal()
+            .domain([d3.min(data, d => +d[k]), d3.max(data, d => +d[k])])
+            .range(d3.schemeCategory10);
+
+        // generate mds data scatterplot
+        svg.selectAll("dot")
+            .data(data)
+            .enter()
+            .append("circle")
+                .attr("cx", d => x(d.x))
+                .attr("cy", d => y(d.y))
+                .attr("r", 1.5)
+                .style("fill", d => color(+d[k]))
+                .style("opacity", 0.6);
+
+        // text label for x axis
+        svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 3) + ")")
+            .style("text-anchor", "middle")
+            .text("Dimension 1");
+
+        // text label for y axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Dimension 2");
+
+        // text label for plot
+        svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2) + 2)
+            .attr("text-anchor", "middle")
+            .style("text-decoration", "underline")  
+            .text("Scatterplot of the Data Euclidean MDS");
+        })
+    }
+
+    generateMDSData('kmeans_6')
+
+</script>
+
+<script>
+
+    function generateMDSVar() {
+        // plot dimensions and margins
+        const margin = {top: 30, right: 20, bottom: 40, left: 50};
+        const width = 640 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        
+        // create empty plot and append to container div
+        const svg = d3.select("#mds-var")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        // Parse the Data
+        d3.csv('http://localhost:8000/mds-var').then(function(data) {
+        
+        // create x-axis
+        const x = d3.scaleLinear()
+            .range([0, width])
+            .domain([-1, 1])
+
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+            
+        // create y-axis
+        const y = d3.scaleLinear()
+        .domain([-1, 1])
+        .range([height, 0]);
+
+        svg.append("g")
+        .call(d3.axisLeft(y));
+
+        // create invisible tooltip
+        const tooltip = d3.select("#mds-var")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "1px")
+            .style("border-radius", "5px")
+            .style("padding", "10px")
+            .style("position", "absolute")
+
+        const mouseover = function(event, d) {
+            tooltip.style("opacity", 1)
+        }
+
+        const mousemove = function(event, d) {
+            tooltip
+            .html(`${d.feature}`)
+            .style("left", (d3.mouse(this)[0]) + "px")
+            .style("top", (d3.mouse(this)[1]) + "px")
+        }
+
+        const mouseleave = function(event,d) {
+            tooltip
+                .transition()
+                .duration(200)
+                .style("opacity", 0)
+        }
+
+        // generate mds var scatterplot
+        svg.selectAll("dot")
+            .data(data)
+            .enter()
+            .append("circle")
+                .attr("cx", d => x(d.x))
+                .attr("cy", d => y(d.y))
+                .attr("r", 5)
+                .style("fill", "steelblue")
+            .on("mouseover", mouseover)
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave)
+
+
+        // text label for x axis
+        svg.append("text")
+            .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - 3) + ")")
+            .style("text-anchor", "middle")
+            .text("Dimension 1");
+
+        // text label for y axis
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Dimension 2");
+
+        // text label for plot
+        svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2) + 2)
+            .attr("text-anchor", "middle")
+            .style("text-decoration", "underline")  
+            .text("Scatterplot of the Variables' 1-|correlation| MDS");
+        })
+    }
+
+    generateMDSVar()
+
+</script>
 </body>
 </html>

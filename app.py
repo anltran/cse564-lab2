@@ -28,5 +28,13 @@ def loadings():
 def data():
     return send_from_directory('static', 'spotify-clustered.csv')
 
+@app.route('/mds-data')
+def mds_data():
+    return send_from_directory('static', 'data_mds.csv')
+
+@app.route('/mds-var')
+def mds_var():
+    return send_from_directory('static', 'var_mds.csv')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

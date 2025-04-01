@@ -4,6 +4,22 @@
     <meta charset="utf-8">
     <title>CSE 564 Lab 2a</title>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <style>
+        #feature-list {
+          list-style-type: none;
+          padding: 0;
+          margin: 0;
+        }
+        #feature-list li {
+          border: 1px solid #ccc;
+          padding: 10px;
+          margin-bottom: 5px;
+          cursor: grab;
+        }
+        #feature-list li.dragging {
+          opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
 
@@ -27,6 +43,11 @@
 
 <div id="mds-data"></div>
 <div id="mds-var"></div>
+
+<p><strong>Parallel Coordinates Plot Axis Ordering</strong></p>
+<ul id="feature-list"></ul>
+
+<div id="pcp"></div>
 
 <script>
 
@@ -210,6 +231,9 @@
                 const mdsData = document.getElementById("mds-data");
                 mdsData.innerHTML = '';
                 generateMDSData("kmeans_" + document.getElementById('mse-position').textContent);
+                const pcp = document.getElementById("pcp");
+                pcp.innerHTML = '';
+                generatePCP("kmeans_" + document.getElementById('mse-position').textContent, Array.from(featureList.children).map(li => li.textContent));
             });
 
         // Select and color the sixth bar by default
@@ -693,5 +717,146 @@
     generateMDSVar()
 
 </script>
+
+<script>
+
+    function generatePCP(k, features) {
+        // plot dimensions and margins
+        const margin = {top: 50, right: 50, bottom: 10, left: 50};
+        const width = 1280 - margin.left - margin.right;
+        const height = 800 - margin.top - margin.bottom;
+    
+        // create empty plot and append to container div
+        const svg = d3.select("#pcp")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Parse the Data
+        d3.csv('http://localhost:8000/data').then(function(data) {
+
+        // color scale
+        const color = d3.scaleOrdinal()
+            .domain([d3.min(data, d => +d[k]), d3.max(data, d => +d[k])])
+            .range(d3.schemeCategory10);
+
+        // y-axis scale for each feature
+        const y = {}
+        for (i in features) {
+            name = features[i]
+            y[name] = d3.scaleLinear()
+                .domain([d3.min(data, d => +d[name]), d3.max(data, d => +d[name])])
+                .range([height, 0])
+        }
+
+        // x-axis
+        x = d3.scalePoint()
+            .range([0, width])
+            .domain(features)
+
+        function path(d) {
+            return d3.line()(features.map(function (p) {
+                return [x(p), y[p](d[p])]
+            }))
+        }
+
+        // draw the polyline for each data point
+        svg.selectAll("myPath")
+            .data(data)
+            .enter()
+            .append("path")
+                .attr("d", path)
+                .style("fill", "none")
+                .style("stroke", function(d) { return color(+d[k]) })
+                .style("opacity", 0.5)
+
+        // add axis for each feature
+        svg.selectAll("myAxis")
+            .data(features)
+            .enter()
+            .append("g")
+                .attr("class", "axis")
+                .attr("transform", function(d) { return `translate(${x(d)})`; })
+                .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d]).tickFormat(d3.format(".3"))); })
+            .append("text")
+                .style("text-anchor", "middle")
+                .attr("y", -9)
+                .text(function(d) { return d; })
+                .style("fill", "black")
+
+        // text label for plot
+        svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2) + 2)
+            .attr("text-anchor", "middle")
+            .style("text-decoration", "underline")  
+            .text("Parallel Coordinates Plot");
+        })
+    }
+
+    // default order of axis features
+    features = ['artist_count', 'streams', 'in_spotify_playlists', 'in_apple_playlists', 'in_deezer_playlists', 'bpm', 'danceability', 'valence', 'energy', 'acousticness', 'instrumentalness', 'liveness', 'speechiness']
+    
+    generatePCP('kmeans_6', features)
+
+</script>
+
+<script>
+    
+    // Populate the list with features
+    const featureList = document.getElementById('feature-list');
+    features.forEach(element => {
+        const li = document.createElement('li');
+        li.textContent = element;
+        li.setAttribute('draggable', true);
+        featureList.appendChild(li);
+    });
+
+    let draggedItem = null;
+
+    featureList.addEventListener('dragstart', (event) => {
+        draggedItem = event.target;
+        event.target.classList.add('dragging');
+        event.dataTransfer.setData('text/plain', null);
+    });
+
+    featureList.addEventListener('dragend', (event) => {
+        event.target.classList.remove('dragging');
+        draggedItem = null;
+
+        const pcp = document.getElementById("pcp");
+        pcp.innerHTML = '';
+        generatePCP("kmeans_" + document.getElementById('mse-position').textContent, Array.from(featureList.children).map(li => li.textContent));
+    });
+
+    featureList.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        const afterElement = getDragAfterElement(featureList, event.clientY);
+        if (afterElement == null) {
+        featureList.appendChild(draggedItem);
+        } else {
+        featureList.insertBefore(draggedItem, afterElement);
+        }
+    });
+
+    // Function to get the element after the current mouse position
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+</script>
+
 </body>
 </html>

@@ -129,7 +129,7 @@ with open('./static/data_mds.csv', 'w', newline='') as f:
             row.append(cluster_ids['kmeans_' + str(j+1)][i])
         writer.writerow(row)
 
-
+# Run MDS on 1-|correlation| of the features matrix and write the output and feature names to a CSV file
 embedding = MDS(n_components=2, dissimilarity='precomputed', random_state=42)
 mds = embedding.fit_transform(1-abs(df.corr()))
 with open('./static/var_mds.csv', 'w', newline='') as f:

@@ -36,5 +36,9 @@ def mds_data():
 def mds_var():
     return send_from_directory('static', 'var_mds.csv')
 
+@app.route('/full-data')
+def full_data():
+    return send_from_directory('static', 'full-spotify-clustered.csv')
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

@@ -544,25 +544,19 @@
         // create x-axis
         const x = d3.scaleLinear()
             .range([0, width])
-            .domain([d3.min(data, d => d.x), d3.max(data, d => d.x)])
-
-        xAxis = d3.axisBottom(x)
-        xAxis.tickFormat(d3.format(".1"));
+            .domain([-10, 10])
 
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
+            .call(d3.axisBottom(x));
             
         // create y-axis
         const y = d3.scaleLinear()
-        .domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
+        .domain([-10, 10])
         .range([height, 0]);
 
-        yAxis = d3.axisLeft(y)
-        yAxis.tickFormat(d3.format(".1"));
-
         svg.append("g")
-            .call(yAxis);
+            .call(d3.axisLeft(y));
 
         // color scale
         const color = d3.scaleOrdinal()
@@ -578,7 +572,7 @@
                 .attr("cy", d => y(d.y))
                 .attr("r", 1.5)
                 .style("fill", d => color(+d[k]))
-                .style("opacity", 0.6);
+                .style("opacity", 0.8);
 
         // text label for x axis
         svg.append("text")
@@ -655,7 +649,6 @@
             .style("border-width", "1px")
             .style("border-radius", "5px")
             .style("padding", "10px")
-            .style("position", "absolute")
 
         const mouseover = function(event, d) {
             tooltip.style("opacity", 1)
@@ -664,8 +657,8 @@
         const mousemove = function(event, d) {
             tooltip
             .html(`${d.feature}`)
-            .style("left", (d3.mouse(this)[0]) + "px")
-            .style("top", (d3.mouse(this)[1]) + "px")
+            .style("left", (event.x)/2 + "px")
+            .style("top", (event.y)/2 + "px")
         }
 
         const mouseleave = function(event,d) {
@@ -735,7 +728,7 @@
                 .attr("transform", `translate(${margin.left},${margin.top})`);
 
         // Parse the Data
-        d3.csv('http://localhost:8000/data').then(function(data) {
+        d3.csv('http://localhost:8000/full-data').then(function(data) {
 
         // color scale
         const color = d3.scaleOrdinal()
@@ -797,7 +790,7 @@
     }
 
     // default order of axis features
-    features = ['artist_count', 'streams', 'in_spotify_playlists', 'in_apple_playlists', 'in_deezer_playlists', 'bpm', 'danceability', 'valence', 'energy', 'acousticness', 'instrumentalness', 'liveness', 'speechiness']
+    features = ['artist_count', 'streams', 'in_spotify_playlists', 'in_apple_playlists', 'in_deezer_playlists', 'bpm', 'key', 'mode', 'danceability', 'valence', 'energy', 'acousticness', 'instrumentalness', 'liveness', 'speechiness']
     
     generatePCP('kmeans_6', features)
 

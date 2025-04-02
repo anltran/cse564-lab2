@@ -116,7 +116,7 @@ result.to_csv('./static/spotify-clustered.csv', index=False)
 
 # Run MDS on dataset and write the output and cluster ids to a CSV file
 embedding = MDS(n_components=2, dissimilarity='euclidean', random_state=42)
-mds = embedding.fit_transform(df)
+mds = embedding.fit_transform(X)
 with open('./static/data_mds.csv', 'w', newline='') as f:
     labels = ['x', 'y']
     for i in range(10):

@@ -668,6 +668,22 @@
                 .style("opacity", 0)
         }
 
+        const mouseclick = function(event, d) {
+            features.splice(features.indexOf(d.feature), 1)
+            features.unshift(d.feature)
+            const pcp = document.getElementById("pcp");
+            pcp.innerHTML = '';
+            generatePCP("kmeans_" + document.getElementById('mse-position').textContent, features);
+            const featureList = document.getElementById('feature-list');
+            featureList.innerHTML = '';
+            features.forEach(element => {
+                const li = document.createElement('li');
+                li.textContent = element;
+                li.setAttribute('draggable', true);
+                featureList.appendChild(li);
+            });
+        }
+
         // generate mds var scatterplot
         svg.selectAll("dot")
             .data(data)
@@ -680,7 +696,7 @@
             .on("mouseover", mouseover)
             .on("mousemove", mousemove)
             .on("mouseleave", mouseleave)
-
+            .on("click", mouseclick)
 
         // text label for x axis
         svg.append("text")
@@ -789,7 +805,7 @@
         })
     }
 
-    // default order of axis features
+    // Default order of axis features
     features = ['artist_count', 'streams', 'in_spotify_playlists', 'in_apple_playlists', 'in_deezer_playlists', 'bpm', 'key', 'mode', 'danceability', 'valence', 'energy', 'acousticness', 'instrumentalness', 'liveness', 'speechiness']
     
     generatePCP('kmeans_6', features)
@@ -819,9 +835,11 @@
         event.target.classList.remove('dragging');
         draggedItem = null;
 
+        // Re-render the PCP with the new order of features 
+        features = Array.from(featureList.children).map(li => li.textContent);
         const pcp = document.getElementById("pcp");
         pcp.innerHTML = '';
-        generatePCP("kmeans_" + document.getElementById('mse-position').textContent, Array.from(featureList.children).map(li => li.textContent));
+        generatePCP("kmeans_" + document.getElementById('mse-position').textContent, features);
     });
 
     featureList.addEventListener('dragover', (event) => {

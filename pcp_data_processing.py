@@ -5,6 +5,7 @@ import pandas as pd
 
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
 
 from sklearn.cluster import KMeans
 
@@ -22,6 +23,11 @@ df['streams'] = df['streams'].astype(int)
 df['in_deezer_playlists'] = pd.to_numeric(df['in_deezer_playlists'], errors='coerce')
 df = df.dropna(subset=['in_deezer_playlists'])
 df['in_deezer_playlists'] = df['in_deezer_playlists'].astype(int)
+
+# Comment this block to disable stratified sampling
+df = df.dropna(subset=['key'])
+train_df, test_df = train_test_split(df, test_size=0.5, stratify=df['key'], random_state=42)
+df = test_df.copy()
 
 transformer = ColumnTransformer(
     transformers=[
